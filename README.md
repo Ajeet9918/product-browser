@@ -56,8 +56,8 @@ Pass `nextCursor` as the `cursor` param in the next request to get the next page
 The cursor encodes `{ created_at, id }` of the last product in base64url. This acts as a stable bookmark — if new products are added while browsing, you will never see duplicates or miss any products.
 
 ## Project Structure
+```
 product-browser/
-
 ├── src/
 │   ├── db.js           # DB connection pool
 │   ├── migrate.js      # Creates table and indexes
@@ -67,6 +67,7 @@ product-browser/
 ├── index.js            # Express server
 ├── .env                # Environment variables (not committed)
 └── README.md
+```
 
 ## Setup locally
 
