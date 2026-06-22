@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Browser</title>
+
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Your HTML Here -->
+  <div class="header">
+    <div class="logo">
+      <i class="ti ti-stack-2"></i>
+      Product Browser
+    </div>
+    <span class="badge" id="total-badge">200,000 products</span>
+  </div>
+  <script>
+    const API = 'https://product-browser-pnk3.onrender.com/';
+
+    let cursorStack = [];
+    let currentCursor = null;
+    let page = 1;
+
+    function getLimit() {
+      return Math.min(
+        Math.max(
+          parseInt(document.getElementById('limit-input').value) || 12,
+          4
+        ),
+        100
+      );
+    }
+
+    function getCategory() {
+      return document.getElementById('cat-select').value;
+    }
+
+    async function loadCategories() {
+      try {
+        const res = await fetch(`${API}/products/categories`);
+        const cats = await res.json();
+
+        const sel = document.getElementById('cat-select');
+
+        cats.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function catColor(cat) {
+      const map = {
+        Electronics:'#185FA5',
+        Clothing:'#533AB7',
+        Books:'#0F6E56',
+        Home:'#3B6D11',
+        Sports:'#BA7517',
+        Toys:'#993556',
+        Food:'#993C1D',
+        Beauty:'#A32D2D'
+      };
+
+      return map[cat] || '#5F5E5A';
+    }
+
+    function formatDate(d) {
+      return new Date(d).toLocaleDateString('en-IN', {
+        day:'2-digit',
+        month:'short',
+        year:'numeric'
+      });
+    }
+
+    function formatPrice(p) {
+      return '₹' + parseFloat(p).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    async function fetchProducts(cursor) {
+      const limit = getLimit();
+      const cat = getCategory();
+
+      let url = `${API}/products?limit=${limit}`;
+
+      if (cursor) {
+        url += `&cursor=${cursor}`;
+      }
+
+      if (cat) {
+        url += `&category=${encodeURIComponent(cat)}`;
+      }
+
+      document.getElementById('loading').classList.remove('hidden');
+
+      try {
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          throw new Error('API Error');
+        }
+
+        const data = await res.json();
+
+        document.getElementById('loading').classList.add('hidden');
+
+        // Render products here...
+      } catch (e) {
+        document.getElementById('loading').classList.add('hidden');
+
+        const err = document.getElementById('error');
+        err.classList.remove('hidden');
+        err.textContent =
+          '⚠ Could not connect to API. Make sure your Render URL is set correctly.';
+      }
+    }
+
+    function goNext() {
+      if (!window._nextCursor) return;
+
+      cursorStack.push(currentCursor);
+      currentCursor = window._nextCursor;
+      page++;
+
+      fetchProducts(currentCursor);
+    }
+
+    function goBack() {
+      if (cursorStack.length === 0) return;
+
+      currentCursor = cursorStack.pop();
+      page--;
+
+      fetchProducts(currentCursor);
+    }
+
+    function resetAndFetch() {
+      cursorStack = [];
+      currentCursor = null;
+      page = 1;
+
+      fetchProducts(null);
+    }
+
+    document
+      .getElementById('cat-select')
+      .addEventListener('change', resetAndFetch);
+
+    document
+      .getElementById('limit-input')
+      .addEventListener('change', resetAndFetch);
+
+    loadCategories();
+    fetchProducts(null);
+  </script>
+
+</body>
+</html>
