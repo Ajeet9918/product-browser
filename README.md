@@ -103,4 +103,4 @@ npm run dev
 ## How I used AI
 - Used Claude to understand cursor-based pagination concept and why it's better than OFFSET
 - AI helped with UNNEST syntax for bulk inserts
-- AI caught nothing wrong — reviewed and understood every decision myself
+- Reviewed and understood every decision before writing it
