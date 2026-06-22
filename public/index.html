@@ -1,23 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Browser</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-  <link rel="stylesheet" href="index.css">
-</head>
-<body>
+    body {
+        font-family: var(--font-sans);
+        background: var(--color-background-tertiary);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+    }
 
-  <!-- Your HTML Here -->
-  <div class="header">
+    .header {
+        max-width: 900px;
+        margin: 0 auto 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .logo {
+        font-size: 20px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .logo i {
+        font-size: 22px;
+        color: var(--color-text-info);
+    }
+
+    .controls {
+        max-width: 900px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .controls select {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .controls input[type=number] {
+        width: 80px;
+    }
+
+    .badge {
+        font-size: 12px;
+        padding: 3px 10px;
+        border-radius: var(--border-radius-md);
+        background: var(--color-background-info);
+        color: var(--color-text-info);
+        font-weight: 500;
+    }
+
+    .grid {
+        max-width: 900px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+    }
+
+    .card {
+        background: var(--color-background-primary);
+        border: 0.5px solid var(--color-border-tertiary);
+        border-radius: var(--border-radius-lg);
+        padding: 1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: border-color 0.15s;
+    }
+
+    .card:hover {
+        border-color: var(--color-border-primary);
+    }
+
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .card-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        line-height: 1.4;
+    }
+
+    .card-price {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--color-text-success);
+        white-space: nowrap;
+    }
+
+    .card-cat {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .card-cat i {
+        font-size: 13px;
+    }
+
+    .card-date {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        margin-top: 4px;
+    }
+
+    .pagination {
+        max-width: 900px;
+        margin: 1.5rem auto 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-info {
+        font-size: 13px;
+        color: var(--color-text-secondary);
+    }
+
+    .btn-row {
+        display: flex;
+        gap: 8px;
+    }
+
+    .loading {
+        max-width: 900px;
+        margin: 2rem auto;
+        text-align: center;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+    }
+
+    .empty {
+        max-width: 900px;
+        margin: 2rem auto;
+        text-align: center;
+        color: var(--color-text-secondary);
+        font-size: 14px;
+        padding: 3rem;
+        background: var(--color-background-primary);
+        border-radius: var(--border-radius-lg);
+        border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .error-msg {
+        max-width: 900px;
+        margin: 1rem auto;
+        padding: 12px 16px;
+        background: var(--color-background-danger);
+        color: var(--color-text-danger);
+        border-radius: var(--border-radius-md);
+        font-size: 13px;
+    }
+</style>
+
+<h2 class="sr-only">Product browser — browse and filter 200,000 products with pagination</h2>
+
+<div class="header">
     <div class="logo">
-      <i class="ti ti-stack-2"></i>
-      Product Browser
+        <i class="ti ti-stack-2" aria-hidden="true"></i>
+        Product Browser
     </div>
     <span class="badge" id="total-badge">200,000 products</span>
-  </div>
-  <script>
+</div>
+
+<div class="controls">
+    <select id="cat-select" aria-label="Filter by category">
+        <option value="">All categories</option>
+    </select>
+    <input type="number" id="limit-input" value="12" min="4" max="100" aria-label="Products per page"
+        title="Per page" />
+    <button onclick="resetAndFetch()" style="white-space:nowrap">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Reset
+    </button>
+</div>
+
+<div id="error" class="error-msg" style="display:none"></div>
+<div id="loading" class="loading" style="display:none"><i class="ti ti-loader" aria-hidden="true"></i> Loading...</div>
+<div id="grid" class="grid"></div>
+<div id="empty" class="empty" style="display:none"><i class="ti ti-mood-empty"
+        style="font-size:32px;display:block;margin-bottom:8px" aria-hidden="true"></i>No products found</div>
+
+<div class="pagination">
+    <button id="btn-prev" onclick="goBack()" disabled>
+        <i class="ti ti-arrow-left" aria-hidden="true"></i> Previous
+    </button>
+    <span class="page-info" id="page-info">Page 1</span>
+    <button id="btn-next" onclick="goNext()" disabled>
+        Next <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+</div>
+
+<script>
     const API = 'https://product-browser-pnk3.onrender.com/';
 
     let cursorStack = [];
@@ -25,143 +221,127 @@
     let page = 1;
 
     function getLimit() {
-      return Math.min(
-        Math.max(
-          parseInt(document.getElementById('limit-input').value) || 12,
-          4
-        ),
-        100
-      );
+        return Math.min(Math.max(parseInt(document.getElementById('limit-input').value) || 12, 4), 100);
     }
 
     function getCategory() {
-      return document.getElementById('cat-select').value;
+        return document.getElementById('cat-select').value;
     }
 
     async function loadCategories() {
-      try {
-        const res = await fetch(`${API}/products/categories`);
-        const cats = await res.json();
-
-        const sel = document.getElementById('cat-select');
-
-        cats.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c;
-          opt.textContent = c;
-          sel.appendChild(opt);
-        });
-      } catch (e) {
-        console.error(e);
-      }
+        try {
+            const res = await fetch(`${API}/products/categories`);
+            const cats = await res.json();
+            const sel = document.getElementById('cat-select');
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.textContent = c;
+                sel.appendChild(opt);
+            });
+        } catch (e) { }
     }
 
     function catColor(cat) {
-      const map = {
-        Electronics:'#185FA5',
-        Clothing:'#533AB7',
-        Books:'#0F6E56',
-        Home:'#3B6D11',
-        Sports:'#BA7517',
-        Toys:'#993556',
-        Food:'#993C1D',
-        Beauty:'#A32D2D'
-      };
-
-      return map[cat] || '#5F5E5A';
+        const map = { Electronics: '#185FA5', Clothing: '#533AB7', Books: '#0F6E56', Home: '#3B6D11', Sports: '#BA7517', Toys: '#993556', Food: '#993C1D', Beauty: '#A32D2D' };
+        return map[cat] || '#5F5E5A';
     }
 
     function formatDate(d) {
-      return new Date(d).toLocaleDateString('en-IN', {
-        day:'2-digit',
-        month:'short',
-        year:'numeric'
-      });
+        return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function formatPrice(p) {
-      return '₹' + parseFloat(p).toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+        return '₹' + parseFloat(p).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     async function fetchProducts(cursor) {
-      const limit = getLimit();
-      const cat = getCategory();
+        const limit = getLimit();
+        const cat = getCategory();
+        let url = `${API}/products?limit=${limit}`;
+        if (cursor) url += `&cursor=${cursor}`;
+        if (cat) url += `&category=${encodeURIComponent(cat)}`;
 
-      let url = `${API}/products?limit=${limit}`;
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('grid').innerHTML = '';
+        document.getElementById('empty').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('btn-next').disabled = true;
+        document.getElementById('btn-prev').disabled = true;
 
-      if (cursor) {
-        url += `&cursor=${cursor}`;
-      }
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('API error');
+            const data = await res.json();
+            document.getElementById('loading').style.display = 'none';
 
-      if (cat) {
-        url += `&category=${encodeURIComponent(cat)}`;
-      }
+            if (!data.data || data.data.length === 0) {
+                document.getElementById('empty').style.display = 'block';
+                return;
+            }
 
-      document.getElementById('loading').classList.remove('hidden');
+            const grid = document.getElementById('grid');
+            data.data.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+        <div class="card-top">
+          <div class="card-name">${p.name}</div>
+          <div class="card-price">${formatPrice(p.price)}</div>
+        </div>
+        <div class="card-cat">
+          <i class="ti ti-tag" aria-hidden="true" style="color:${catColor(p.category)}"></i>
+          <span style="color:${catColor(p.category)};font-weight:500">${p.category}</span>
+        </div>
+        <div class="card-date"><i class="ti ti-calendar" aria-hidden="true"></i> ${formatDate(p.created_at)}</div>
+      `;
+                grid.appendChild(card);
+            });
 
-      try {
-        const res = await fetch(url);
+            document.getElementById('btn-prev').disabled = page <= 1;
+            document.getElementById('btn-next').disabled = !data.pagination.hasNextPage;
+            document.getElementById('page-info').textContent = `Page ${page}`;
 
-        if (!res.ok) {
-          throw new Error('API Error');
+            if (data.pagination.hasNextPage) {
+                window._nextCursor = data.pagination.nextCursor;
+            } else {
+                window._nextCursor = null;
+            }
+
+        } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            const err = document.getElementById('error');
+            err.style.display = 'block';
+            err.textContent = '⚠ Could not connect to API. Make sure your Render URL is set correctly.';
         }
-
-        const data = await res.json();
-
-        document.getElementById('loading').classList.add('hidden');
-
-        // Render products here...
-      } catch (e) {
-        document.getElementById('loading').classList.add('hidden');
-
-        const err = document.getElementById('error');
-        err.classList.remove('hidden');
-        err.textContent =
-          '⚠ Could not connect to API. Make sure your Render URL is set correctly.';
-      }
     }
 
     function goNext() {
-      if (!window._nextCursor) return;
-
-      cursorStack.push(currentCursor);
-      currentCursor = window._nextCursor;
-      page++;
-
-      fetchProducts(currentCursor);
+        if (!window._nextCursor) return;
+        cursorStack.push(currentCursor);
+        currentCursor = window._nextCursor;
+        page++;
+        fetchProducts(currentCursor);
     }
 
     function goBack() {
-      if (cursorStack.length === 0) return;
-
-      currentCursor = cursorStack.pop();
-      page--;
-
-      fetchProducts(currentCursor);
+        if (cursorStack.length === 0) return;
+        currentCursor = cursorStack.pop();
+        page--;
+        fetchProducts(currentCursor);
     }
 
     function resetAndFetch() {
-      cursorStack = [];
-      currentCursor = null;
-      page = 1;
-
-      fetchProducts(null);
+        cursorStack = [];
+        currentCursor = null;
+        page = 1;
+        fetchProducts(null);
     }
 
-    document
-      .getElementById('cat-select')
-      .addEventListener('change', resetAndFetch);
-
-    document
-      .getElementById('limit-input')
-      .addEventListener('change', resetAndFetch);
+    document.getElementById('cat-select').addEventListener('change', resetAndFetch);
+    document.getElementById('limit-input').addEventListener('change', resetAndFetch);
 
     loadCategories();
     fetchProducts(null);
-  </script>
-
+</script>
 </body>
 </html>
